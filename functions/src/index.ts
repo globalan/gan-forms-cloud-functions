@@ -98,3 +98,38 @@ export const createUser = onCall(
     }
   }
 );
+
+interface DeleteUserRequest {
+  uid: string;
+}
+
+export const deleteUser = onCall(
+  async (request: CallableRequest<DeleteUserRequest>) => {
+    const { data, auth } = request;
+    // Verify the request is made by an authenticated admin
+    if (!auth) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only administrators can create new users."
+      );
+    }
+
+    const { uid } = data;
+
+    // Check if the required data is provided
+    if (!uid) {
+      throw new HttpsError(
+        "invalid-argument",
+        'The function must be called with the arguments "uid".'
+      );
+    }
+
+    try {
+      await admin.auth().deleteUser(uid);
+      return { message: "User deleted successfully" };
+    } catch (error) {
+      logger.error("Error creating user", { structuredData: true });
+      throw new HttpsError("internal", "Unable to create user", error);
+    }
+  }
+);
