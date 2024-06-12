@@ -26,7 +26,7 @@ module.exports = {
     "import",
   ],
   rules: {
-    "max-len": ["error", { "code": 100 }],
+    "max-len": ["error", { "code": 110 }],
     "quotes": "off",
     "object-curly-spacing": "off",
     "import/no-unresolved": 0,

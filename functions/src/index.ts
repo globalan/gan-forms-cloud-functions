@@ -48,6 +48,7 @@ export const userDeletedTrigger = auth.user().onDelete((user) => {
 
 interface CreateUserRequest {
   name: string;
+  lastName: string;
   email: string;
   password: string;
 }
@@ -63,13 +64,13 @@ export const createUser = onCall(
       );
     }
 
-    const { name, email, password } = data;
+    const { name, lastName, email, password } = data;
 
     // Check if the required data is provided
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !lastName) {
       throw new HttpsError(
         "invalid-argument",
-        'The function must be called with the arguments "name", "email", and "password".'
+        'The function must be called with the arguments "name", "lastName", "email", and "password".'
       );
     }
 
@@ -83,6 +84,7 @@ export const createUser = onCall(
       // Optionally, add the user to Firestore or perform other actions
       await admin.firestore().collection("users").doc(userRecord.uid).set({
         name: name,
+        lastName: lastName,
         email: email,
         roles: [],
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
