@@ -16,6 +16,10 @@ import {
 import * as logger from "firebase-functions/logger";
 import { auth } from "firebase-functions/v1";
 import * as admin from "firebase-admin";
+import {
+  CreateUserRequest,
+  DeleteUserRequest,
+} from "./interfaces/user-requests";
 
 admin.initializeApp();
 
@@ -46,13 +50,6 @@ export const userDeletedTrigger = auth.user().onDelete((user) => {
   return doc.delete();
 });
 
-interface CreateUserRequest {
-  name: string;
-  lastName: string;
-  email: string;
-  password: string;
-}
-
 export const createUser = onCall(
   async (request: CallableRequest<CreateUserRequest>) => {
     const { data, auth } = request;
@@ -64,8 +61,8 @@ export const createUser = onCall(
       );
     }
 
-    const { name, lastName, email, password } = data;
-
+    const { name, lastName, email, password, roles } = data;
+    const _roles: string[] = roles ?? [];
     // Check if the required data is provided
     if (!name || !email || !password || !lastName) {
       throw new HttpsError(
@@ -86,7 +83,7 @@ export const createUser = onCall(
         name: name,
         lastName: lastName,
         email: email,
-        roles: [],
+        roles: _roles,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
@@ -100,10 +97,6 @@ export const createUser = onCall(
     }
   }
 );
-
-interface DeleteUserRequest {
-  uid: string;
-}
 
 export const deleteUser = onCall(
   async (request: CallableRequest<DeleteUserRequest>) => {

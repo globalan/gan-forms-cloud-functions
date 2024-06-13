@@ -26,6 +26,7 @@ module.exports = {
     "import",
   ],
   rules: {
+    "linebreak-style": "off",
     "max-len": ["error", { "code": 110 }],
     "quotes": "off",
     "object-curly-spacing": "off",
