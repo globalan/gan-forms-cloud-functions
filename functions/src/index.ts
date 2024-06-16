@@ -19,6 +19,7 @@ import * as admin from "firebase-admin";
 import {
   CreateUserRequest,
   DeleteUserRequest,
+  UpdateUserRequest,
 } from "./interfaces/user-requests";
 
 admin.initializeApp();
@@ -61,7 +62,7 @@ export const createUser = onCall(
       );
     }
 
-    const { name, lastName, email, phone, password, roles } = data;
+    let { name, lastName, email, phone, password, roles } = data;
     const _roles: string[] = roles ?? [];
     // Check if the required data is provided
     if (!name || !email || !password || !lastName) {
@@ -72,10 +73,12 @@ export const createUser = onCall(
     }
 
     try {
+      // sanitize data
+      email = email.trim();
       // Create the user in Firebase Authentication
       const userRecord = await admin.auth().createUser({
-        email: email,
-        password: password,
+        email,
+        password,
       });
 
       // Optionally, add the user to Firestore or perform other actions
@@ -95,6 +98,70 @@ export const createUser = onCall(
     } catch (error) {
       logger.error("Error creating user", { structuredData: true });
       throw new HttpsError("internal", "No se pudo crear el usuario", error);
+    }
+  }
+);
+
+export const updateUser = onCall(
+  async (request: CallableRequest<UpdateUserRequest>) => {
+    const { data, auth } = request;
+
+    // Verificar que el usuario esté autenticado
+    if (!auth) {
+      throw new HttpsError(
+        "permission-denied",
+        "Acceso denegado. Debes estar autenticado."
+      );
+    }
+
+    let { id, name, lastName, email, phone, password } = data;
+    const uid = id;
+    // Verificar que el UID del usuario a actualizar esté presente
+    if (!uid) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Se requiere proporcionar el UID del usuario."
+      );
+    }
+
+    try {
+      // sanitize data
+      email = email?.trim();
+      // Actualizar la información del usuario en Firebase Authentication
+      if (email && email !== "") {
+        // Actualizar email en Firebase Authentication
+        await admin.auth().updateUser(uid, { email });
+
+        // Actualizar email en Firestore
+        const userRef = admin.firestore().collection("users").doc(uid);
+        await userRef.update({ email });
+      }
+
+      // Verificar y actualizar la contraseña si se proporciona y no está vacía
+      if (password && password !== "") {
+        await admin.auth().updateUser(uid, { password });
+      }
+
+      // Actualizar otros campos de perfil si se proporcionan
+      if (name || lastName || phone) {
+        const updateData: Partial<UpdateUserRequest> = {
+          ...(name && { name }),
+          ...(lastName && { lastName }),
+          ...(phone && { phone }),
+        };
+
+        const userRef = admin.firestore().collection("users").doc(uid);
+        await userRef.update(updateData);
+      }
+
+      return { uid, message: "Usuario actualizado exitosamente" };
+    } catch (error) {
+      logger.error("Error updating user", { error, structuredData: true });
+      throw new HttpsError(
+        "internal",
+        "No se pudo actualizar el usuario",
+        error
+      );
     }
   }
 );
