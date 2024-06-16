@@ -57,17 +57,17 @@ export const createUser = onCall(
     if (!auth) {
       throw new HttpsError(
         "permission-denied",
-        "Only administrators can create new users."
+        "Solo los administradores pueden crear nuevos usuarios."
       );
     }
 
-    const { name, lastName, email, password, roles } = data;
+    const { name, lastName, email, phone, password, roles } = data;
     const _roles: string[] = roles ?? [];
     // Check if the required data is provided
     if (!name || !email || !password || !lastName) {
       throw new HttpsError(
         "invalid-argument",
-        'The function must be called with the arguments "name", "lastName", "email", and "password".'
+        'La función debe ser llamada con los argumentos"name", "lastName", "email", and "password".'
       );
     }
 
@@ -80,9 +80,10 @@ export const createUser = onCall(
 
       // Optionally, add the user to Firestore or perform other actions
       await admin.firestore().collection("users").doc(userRecord.uid).set({
-        name: name,
-        lastName: lastName,
-        email: email,
+        name,
+        lastName,
+        email,
+        phone,
         roles: _roles,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -90,10 +91,10 @@ export const createUser = onCall(
       logger.info("User cerated", userRecord.email, userRecord.uid, {
         structuredData: true,
       });
-      return { uid: userRecord.uid, message: "User created successfully" };
+      return { uid: userRecord.uid, message: "Usuario creado exitosamente" };
     } catch (error) {
       logger.error("Error creating user", { structuredData: true });
-      throw new HttpsError("internal", "Unable to create user", error);
+      throw new HttpsError("internal", "No se pudo crear el usuario", error);
     }
   }
 );
@@ -105,7 +106,7 @@ export const deleteUser = onCall(
     if (!auth) {
       throw new HttpsError(
         "permission-denied",
-        "Only administrators can create new users."
+        "Solo los administradores pueden crear nuevos usuarios."
       );
     }
 
@@ -115,16 +116,16 @@ export const deleteUser = onCall(
     if (!uid) {
       throw new HttpsError(
         "invalid-argument",
-        'The function must be called with the arguments "uid".'
+        'La función debe ser llamada con el argumento "uid".'
       );
     }
 
     try {
       await admin.auth().deleteUser(uid);
-      return { message: "User deleted successfully" };
+      return { message: "Usuario eliminado exitosamente" };
     } catch (error) {
       logger.error("Error creating user", { structuredData: true });
-      throw new HttpsError("internal", "Unable to create user", error);
+      throw new HttpsError("internal", "No se pudo crear el usuario", error);
     }
   }
 );
