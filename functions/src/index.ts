@@ -147,7 +147,6 @@ export const updateUser = onCall(
         const updateData: Partial<UpdateUserRequest> = {
           ...(name && { name }),
           ...(lastName && { lastName }),
-          ...(email && { email }),
           ...(phone && { phone }),
         };
 
